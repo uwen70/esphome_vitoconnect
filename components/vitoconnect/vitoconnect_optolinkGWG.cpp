@@ -98,7 +98,7 @@ static constexpr uint32_t GWG_RX_TOTAL_TIMEOUT_MS = 800UL;
 
 // Maximum allowed gap between two consecutive bytes of a response.
 // Larger gaps indicate a broken or aborted frame.
-static constexpr uint32_t GWG_RX_INTERBYTE_TIMEOUT_MS = 60UL;
+static constexpr uint32_t GWG_RX_INTERBYTE_TIMEOUT_MS = 80UL;
 
 OptolinkGWG::OptolinkGWG(uart::UARTDevice* uart) :
   Optolink(uart),
