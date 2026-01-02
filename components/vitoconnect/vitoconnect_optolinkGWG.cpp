@@ -133,32 +133,80 @@ void OptolinkGWG::_drain_uart_() {
   }
 }
 
-// Helper function:
-// GWG supports only 1-byte addresses (<= 0xFF). Other protocols may use 2-byte addresses.
-// If such entries are present in the queue, they must be discarded in GWG mode.
-// This function removes invalid entries until either the queue is empty or the front is valid.
+// Helper: validate function + direction and discard invalid queue entries.
+//
+// Address encoding:
+//   MSB: function
+//   LSB: physical address (0x00..0xFF)
+//
+// If function==0x00 -> legacy behavior (physical read/write by write flag).
+// If function!=0x00 -> telegram byte is selected by function, and write flag must match direction.
+// Otherwise the datapoint is discarded.
 bool OptolinkGWG::_drop_invalid_queue_entries_() {
   while (_queue.size() > 0) {
     OptolinkDP *dp = _queue.front();
+    const uint8_t func = (dp->address >> 8) & 0xFF;
+    const uint8_t addr = dp->address & 0xFF;
 
-    // For GWG, only the low byte is usable, therefore any address > 0xFF is invalid here.
-    if (dp->address <= 0xFF) {
-      return true;  // front entry is valid
+    // Determine whether function is supported and whether dp->write matches.
+    bool supported = true;
+    bool requires_write = false;
+    bool requires_read = false;
+
+    if (func == 0x00) {
+      // Legacy mode: direction is controlled solely by dp->write.
+      // Always supported as long as we use the LSB as physical address.
+      supported = true;
+    } else {
+      // Function table from user (MSB of address).
+      // We only validate direction here; actual telegram byte is selected in _send().
+      switch (func) {
+        case 0x01: requires_read = true; break;   // VIRTUAL READ
+        case 0x02: requires_write = true; break;  // VIRTUAL WRITE
+        case 0x03: requires_read = true; break;   // PHYSICAL READ
+        case 0x04: requires_write = true; break;  // PHYSICAL WRITE
+        case 0x05: requires_read = true; break;   // EEPROM READ
+        case 0x06: requires_write = true; break;  // EEPROM WRITE
+        case 0x49: requires_read = true; break;   // PHYSICAL XRAM READ
+        case 0x50: requires_write = true; break;  // PHYSICAL XRAM WRITE
+        case 0x51: requires_read = true; break;   // PHYSICAL PORT READ
+        case 0x52: requires_write = true; break;  // PHYSICAL PORT WRITE
+        case 0x53: requires_read = true; break;   // PHYSICAL BE READ
+        case 0x54: requires_write = true; break;  // PHYSICAL BE WRITE
+        case 0x65: requires_read = true; break;   // PHYSICAL KMBUS RAM READ (read-only)
+        case 0x67: requires_read = true; break;   // PHYSICAL KMBUS EEPROM READ (read-only)
+        default:
+          supported = false;
+          break;
+      }
     }
 
-    // Discard invalid entry and continue with the next.
-    ESP_LOGW(TAG, "GWG: discarding datapoint with unsupported address 0x%04X", (unsigned) dp->address);
+    if (!supported) {
+      ESP_LOGW(TAG,
+               "GWG: discarding datapoint with unsupported function MSB=0x%02X addr=0x%02X full=0x%04X",
+               func, addr, (unsigned) dp->address);
+      _queue.pop();
+      // delete dp;  // only if this class owns dp allocation
+      continue;
+    }
 
-    // Remove the item from the queue.
-    _queue.pop();
+    // If function != 0x00, enforce direction match with dp->write.
+    if (func != 0x00) {
+      if ((requires_write && !dp->write) || (requires_read && dp->write)) {
+        ESP_LOGW(TAG,
+                 "GWG: discarding datapoint due to direction mismatch: MSB=0x%02X addr=0x%02X full=0x%04X write=%d",
+                 func, addr, (unsigned) dp->address, (int) dp->write);
+        _queue.pop();
+        // delete dp;  // only if this class owns dp allocation
+        continue;
+      }
+    }
 
-    // IMPORTANT:
-    // Only delete dp here if this class owns the datapoint allocation.
-    // If the base class or another component manages lifetime, do NOT delete.
-    // delete dp;
+    // Valid entry found.
+    return true;
   }
 
-  return false;  // queue empty
+  return false;
 }
 
 void OptolinkGWG::loop() {
@@ -252,12 +300,14 @@ void OptolinkGWG::_idle() {
 
 void OptolinkGWG::_send() {
   // SEND state:
-  // This state transmits the request frame (READ/WRITE).
+  // - Drop invalid queue entries (unsupported function or direction mismatch).
+  // - Build request frame based on function (MSB) + write flag.
+  // - Use only the LSB as physical address (GWG supports 1-byte addresses).
+  // - No ACK (0x01) is sent here; ACK belongs exclusively to IDLE reacting to READY (0x05).
   //
-  // GWG limitation:
-  // - GWG supports only 1-byte addresses (<= 0xFF).
-  // - If a queued datapoint uses a larger address (e.g. 2-byte addresses for KW),
-  //   it must be discarded and the next queue entry must be tried immediately.
+  // Frame formats are kept consistent with the legacy implementation:
+  // - READ : <TYPE> <ADDR> <LEN> 0x04
+  // - WRITE: <TYPE> <ADDR> <LEN> 0x04 <DATA...>
   //
   // IMPORTANT:
   // - No ACK (0x01) is sent here. ACK belongs exclusively to IDLE as a reaction to READY (0x05).
@@ -266,6 +316,7 @@ void OptolinkGWG::_send() {
 
   // Drop invalid datapoints (e.g. address out of range for GWG).
   // If no valid datapoint remains, end burst and return to IDLE.
+
   if (!_drop_invalid_queue_entries_()) {
     _burstActive = false;
     _state = IDLE;
@@ -274,34 +325,70 @@ void OptolinkGWG::_send() {
 
   _drain_uart_();
 
-  uint8_t buff[MAX_DP_LENGTH + 4];
-  OptolinkDP* dp = _queue.front();
-
+  OptolinkDP *dp = _queue.front();
+  const uint8_t func = (dp->address >> 8) & 0xFF;
+  const uint8_t addr = dp->address & 0xFF;
   const uint8_t length = dp->length;
-  const uint16_t address = dp->address;  // guaranteed <= 0xFF by _drop_invalid_queue_entries_()
+
+  // Select telegram byte (TYPE) based on function (MSB) and write flag.
+  uint8_t type = 0x00;
+  bool type_ok = true;
+
+  if (func == 0x00) {
+    // Legacy behavior: physical read/write selected by dp->write.
+    type = dp->write ? 0xC8 : 0xCB;
+  } else {
+    // Match telegram byte to function table.
+    // Direction mismatch is already filtered in _drop_invalid_queue_entries_(),
+    // but we keep this switch strict and self-contained.
+    switch (func) {
+      case 0x01: type = 0xC7; break;  // VIRTUAL READ
+      case 0x02: type = 0xC4; break;  // VIRTUAL WRITE
+      case 0x03: type = 0xCB; break;  // PHYSICAL READ
+      case 0x04: type = 0xC8; break;  // PHYSICAL WRITE
+      case 0x05: type = 0xAE; break;  // EEPROM READ
+      case 0x06: type = 0xAD; break;  // EEPROM WRITE
+      case 0x49: type = 0xC5; break;  // PHYSICAL XRAM READ
+      case 0x50: type = 0xC3; break;  // PHYSICAL XRAM WRITE
+      case 0x51: type = 0x6E; break;  // PHYSICAL PORT READ
+      case 0x52: type = 0x6D; break;  // PHYSICAL PORT WRITE
+      case 0x53: type = 0x9E; break;  // PHYSICAL BE READ
+      case 0x54: type = 0x9D; break;  // PHYSICAL BE WRITE
+      case 0x65: type = 0x33; break;  // PHYSICAL KMBUS RAM READ
+      case 0x67: type = 0x43; break;  // PHYSICAL KMBUS EEPROM READ
+      default:
+        type_ok = false;
+        break;
+    }
+  }
+
+  if (!type_ok || type == 0x00) {
+    ESP_LOGW(TAG,
+             "GWG: discarding datapoint due to unknown type mapping: MSB=0x%02X addr=0x%02X full=0x%04X write=%d",
+             func, addr, (unsigned) dp->address, (int) dp->write);
+    _queue.pop();
+    // delete dp;  // only if this class owns dp allocation
+    // Try next immediately.
+    _state = SEND;
+    return;
+  }
+
+  // Build and send frame.
+  uint8_t buff[MAX_DP_LENGTH + 4];
+
+  buff[0] = type;
+  buff[1] = addr;
+  buff[2] = length;
+  buff[3] = 0x04;
 
   if (dp->write) {
-    // WRITE command format:
-    // C8 <addr> <len> 04 <value...>
-    buff[0] = 0xC8;
-    buff[1] = address & 0xFF;
-    buff[2] = length;
-    buff[3] = 0x04;
+    // WRITE: append payload
     memcpy(&buff[4], dp->data, length);
-
-    // Only an ACK (0x00) is expected as response.
-    _rcvLen = 1;
+    _rcvLen = 1;  // expected ACK length (kept as legacy behavior)
     _uart->write_array(buff, 4 + length);
   } else {
-    // READ command format:
-    // CB <addr> <len> 04
-    buff[0] = 0xCB;
-    buff[1] = address & 0xFF;
-    buff[2] = length;
-    buff[3] = 0x04;
-
-    // Expected response length equals the requested data length.
-    _rcvLen = length;
+    // READ: no payload
+    _rcvLen = length;  // expected response equals requested length (legacy behavior)
     _uart->write_array(buff, 4);
   }
 
@@ -315,16 +402,16 @@ void OptolinkGWG::_send() {
 
   // Diagnostic information:
   // Measures how long it took from READY (0x05) to SEND (only meaningful for the first request in a burst).
-  // In burst mode, READY->SEND delay will typically be large or irrelevant.
-  ESP_LOGD(TAG, "READY->SEND delay: %lu ms",
-           (unsigned long)(_sendMillis - _readyMillis));
+  // In burst mode, READY->SEND delay will typically be large or irrelevant.  ESP_LOGD(TAG, "READY->SEND delay: %lu ms", (unsigned long)(_sendMillis - _readyMillis));
+  ESP_LOGD(TAG, "TX: type=0x%02X func=0x%02X addr=0x%02X len=%u write=%d",
+           type, func, addr, (unsigned)length, (int)dp->write);
 
   _state = RECEIVE;
 }
 
 void OptolinkGWG::_receive() {
   // RECEIVE state:
-  // Collect response bytes until the expected response length is met or a timeout occurs.
+  // Collect response bytes until expected response length is met or a timeout occurs.
   while (_uart->available() != 0) {
     uint8_t b = _uart->read();
 
@@ -347,12 +434,11 @@ void OptolinkGWG::_receive() {
   // Case 1: Complete response received.
   if (_rcvBufferLen == _rcvLen) {
     uint32_t rx_time = millis() - _sendMillis;
-    OptolinkDP* dp = _queue.front();
+    OptolinkDP *dp = _queue.front();
+    const uint8_t addr = dp->address & 0xFF;
 
     ESP_LOGD(TAG, "RX complete: addr=0x%02X len=%d time=%lu ms",
-             (unsigned)dp->address,
-             (int)_rcvBufferLen,
-             (unsigned long)rx_time);
+             (unsigned)addr, (int)_rcvBufferLen, (unsigned long)rx_time);
 
     // Forward data to datapoint handler.
     // Note: Typically _tryOnData() will pop the datapoint from the queue (depending on base implementation).

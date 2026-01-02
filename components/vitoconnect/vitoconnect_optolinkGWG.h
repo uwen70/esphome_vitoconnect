@@ -29,20 +29,37 @@ namespace vitoconnect {
  *
  * This class implements the GWG protocol variant of the Viessmann Optolink.
  *
- * Protocol concept (simplified, as observed in practice):
- * - The controller signals readiness by sending 0x05 (READY).
- * - The client must acknowledge READY by sending 0x01 (ACK).
- * - A request frame (READ/WRITE) is then transmitted.
+ * Extended addressing concept:
+ * - GWG supports only 1-byte physical addresses (0x00..0xFF).
+ * - To support multiple read/write "operation types" (virtual/physical/EEPROM/...),
+ *   we encode the operation function in the MSB of the datapoint address.
  *
- * Performance improvement (burst mode):
- * - After a successful response, the next queued request is sent immediately
- *   without waiting for another READY (0x05).
- * - During burst mode, no further ACK (0x01) is sent, because 0x01 is only
- *   the ACK for a READY (0x05) event.
+ *   address = (function << 8) | physical_addr
  *
- * GWG limitation:
- * - GWG only supports 1-byte addresses (<= 0xFF).
- * - Any queued datapoint with a larger address must be discarded in SEND state.
+ * - If function == 0x00, behavior is identical to the legacy implementation:
+ *   - READ  -> telegram byte 0xCB
+ *   - WRITE -> telegram byte 0xC8
+ *
+ * - If function != 0x00, telegram byte is selected according to the function table.
+ *   The write flag is still honored:
+ *   - If write flag does not match the function's read/write direction, the queue entry
+ *     is discarded and processing continues with the next entry.
+ * 
+ *      Anfrage 	                  Funktion 	TelegrammByte (Typ)
+ *      VIRTUAL READ 	              1 	      C7
+ *      VIRTUAL WRITE               02 	      C4
+ *      PHYSICAL READ 	            03 	      CB
+ *      PHYSICAL WRITE 	            04 	      C8
+ *      EEPROM READ 	              05 	      AE
+ *      EEPROM WRITE 	              06 	      AD
+ *      PHYSICAL XRAM READ 	        49 	      C5
+ *      PHYSICAL XRAM WRITE 	      50 	      C3
+ *      PHYSICAL PORT READ 	        51 	      6E
+ *      PHYSICAL PORT WRITE 	      52 	      6D
+ *      PHYSICAL BE READ 	          53 	      9E
+ *      PHYSICAL BE WRITE 	        54 	      9D
+ *      PHYSICAL KMBUS RAM READ 	  65 	      33
+ *      PHYSICAL KMBUS EEPROM READ 	67 	      43
  */
 class OptolinkGWG : public Optolink {
  public:
@@ -68,11 +85,11 @@ class OptolinkGWG : public Optolink {
   // Drain UART RX buffer to remove delayed or stale bytes.
   void _drain_uart_();
 
-  // Drop invalid datapoints (e.g. address out of range for GWG) from the queue.
-  // Returns true if a valid datapoint is available afterwards, false otherwise.
+  // Drop invalid datapoints from the queue (e.g. unsupported function or direction mismatch).
+  // Returns true if a valid datapoint remains at the front of the queue, false if queue is empty.
   bool _drop_invalid_queue_entries_();
 
-  // Timestamp of last meaningful activity (connection watchdog)
+  // Generic activity timestamp (connection watchdog)
   uint32_t _lastMillis;
 
   // Timestamp when the current request was sent (total RX timeout)
