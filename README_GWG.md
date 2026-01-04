@@ -51,7 +51,6 @@ vitoconnect:
   update_interval: 30s
 
 sensor:
-  # --- Aussentemperatur ---
   - platform: vitoconnect
     name: "Aussentemperatur"
     address: 0x6F
@@ -60,12 +59,10 @@ sensor:
     accuracy_decimals: 1
     filters:
       - lambda: |-
-          // Rohwert kommt als 0..255 an; in signed int8 umwandeln
           int8_t s = (x > 127) ? (int8_t)(x - 256) : (int8_t)x;
           return (float)s;
       - multiply: 0.5
-
-  # --- Kessel ---
+  
   - platform: vitoconnect
     name: "Kesseltemperatur Ist"
     address: 0x70
@@ -76,16 +73,6 @@ sensor:
       - multiply: 0.5
 
   - platform: vitoconnect
-    name: "Kesseltemperatur Soll"
-    address: 0x71
-    length: 1
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
-    filters:
-      - multiply: 0.5
-
-  # --- Warmwasser ---
-  - platform: vitoconnect
     name: "Warmwassertemperatur Ist"
     address: 0x42
     length: 1
@@ -93,46 +80,6 @@ sensor:
     accuracy_decimals: 1
     filters:
       - multiply: 0.5
-
-  - platform: vitoconnect
-    name: "Warmwassertemperatur Soll"
-    address: 0x5C
-    length: 1
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
-    filters:
-      - multiply: 0.5
-
-  # --- Heizkreis A (HKA) ---
-  - platform: vitoconnect
-    name: "HKA Niveau"
-    address: 0x64
-    length: 1
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
-    filters:
-      - lambda: |-
-          // Rohwert kommt als 0..255 an; in signed int8 umwandeln
-          int8_t s = (x > 127) ? (int8_t)(x - 256) : (int8_t)x;
-          return (float)s;
-    
-  - platform: vitoconnect
-    name: "HKA Neigung"
-    address: 0x65
-    length: 1
-    accuracy_decimals: 1
-    filters:
-      - multiply: 0.1
-      - lambda: |-
-          return ((float) lroundf(x * 10.0f)) / 10.0f;
-
-  # --- Betriebsstatus / Mode / State ---
-  # Fehlercode leicht verzögert
-  - platform: vitoconnect
-    name: "Fehlercode"
-    address: 0x3F
-    length: 1
-    accuracy_decimals: 0
 ```
 For more parameters, see [example-gwg-protocol.yaml](example-gwg-protocol.yaml).
 
