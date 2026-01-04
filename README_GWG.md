@@ -146,7 +146,7 @@ Example of a visualization in Home Assistant.
 
 ## Captive Portal
 
-Captive Portal on the ESP32.
+Captive Portal on the ESP32.<p>
 <img alt="Image Captive Protal" src="CaptivePortalViessmannWB2.png" />
 
 [Source]: https://github.com/openv/openv/wiki/Protokoll-GWG
