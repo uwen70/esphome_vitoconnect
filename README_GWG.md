@@ -139,11 +139,12 @@ For further parameters, see example-gwg-protocol.yaml
 Tested with OptoLink ESP32-S2 adapter from here:
 <https://github.com/openv/openv/wiki/ESPHome-Optolink>
 
-## Captive Portal
-
-Image
-
 ## Homeassistant 
 
-Image
+<img alt="Image HA" src="HA_LogTempViessmannWB2.png" />
+
+## Captive Portal
+
+<img alt="Image Captive Protal" src="CaptivePortalViessmannWB2.png" />
+
 
