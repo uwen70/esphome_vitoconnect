@@ -134,14 +134,14 @@ sensor:
     length: 1
     accuracy_decimals: 0
 ```
-For further parameters, see [example-gwg-protocol.yaml](example-gwg-protocol.yaml).
+For more parameters, see [example-gwg-protocol.yaml](example-gwg-protocol.yaml).
 
 Tested with OptoLink ESP32-S2 adapter from here:
 <https://github.com/openv/openv/wiki/ESPHome-Optolink>
 
 ## Home Assistant 
 
-Example of a visualization in Home Assistant.
+Example of a visualization in Home Assistant.<p>
 <img alt="Image HA" src="HA_LogTempViessmannWB2.png" />
 
 ## Captive Portal
