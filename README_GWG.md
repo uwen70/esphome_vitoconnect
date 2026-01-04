@@ -1,12 +1,12 @@
 # GWG Protocol
 
-The old Viessmann Optolink GWG protocol is used, for example, in the Vitodens 200 WB2 up to approximately the year 2000. Unlike the newer KW and P300 protocols, it only has an address range from 0x00 to 0xFFf. However, different targets are distinguished within the control system. These include virtual and physical addresses, EPROM, KM bus, and the control panel. To differentiate between them, the most significant byte of the actual address is prepended. If this byte is missing or is 0x00, a physical read operation is performed.
+The old Viessmann Optolink GWG protocol is used, for example, in the Vitodens 200 WB2 up to approximately the year 2000. Unlike the newer KW and P300 protocols, it only has an address range from 0x00 to 0xFFf. However, different targets are distinguished within the control system. These include virtual and physical addresses, EPROM, KM bus, and the control panel [Source]. To differentiate between them, the most significant byte of the actual address is prepended. If this byte is missing or is 0x00, a physical read operation is performed.
 
 To write to the address, the write flag must also be set. Write operations are untested. There is a high risk of damaging the control system.
 
 ## Usage
 
-For usage, simply add the following to your config file. Example: V200WB2.
+For usage, simply add the following to your config file. Example: Vitodens WB2.
 Address, length and post processing can be retrieved from <https://github.com/openv/openv/wiki/Adressen>. Length of 2 bytes is by default interpreted as int16, 4 bytes as uint32. Both values are then converted to float.
 
 ```yaml
@@ -134,7 +134,7 @@ sensor:
     length: 1
     accuracy_decimals: 0
 ```
-For further parameters, see example-gwg-protocol.yaml
+For further parameters, see <example-gwg-protocol.yaml>
 
 Tested with OptoLink ESP32-S2 adapter from here:
 <https://github.com/openv/openv/wiki/ESPHome-Optolink>
@@ -147,4 +147,4 @@ Tested with OptoLink ESP32-S2 adapter from here:
 
 <img alt="Image Captive Protal" src="CaptivePortalViessmannWB2.png" />
 
-
+[Source]: https://github.com/openv/openv/wiki/Protokoll-GWG
