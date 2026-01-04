@@ -1,6 +1,6 @@
 # GWG Protocol
 
-The old Viessmann Optolink GWG protocol is used, for example, in the Vitodens 200 WB2 up to approximately the year 2000. Unlike the newer KW and P300 protocols, it only has an address range from 0x00 to 0xFFf. However, different targets are distinguished within the control system. These include virtual and physical addresses, EPROM, KM bus, and the control panel [Source]. To differentiate between them, the most significant byte of the actual address is prepended. If this byte is missing or is 0x00, a physical read operation is performed.
+The old Viessmann Optolink GWG protocol is used, for example, in the Vitodens 200 WB2 up to approximately the year 2000. Unlike the newer KW and P300 protocols, it only has an address range from 0x00 to 0xFFf. However, different targets are distinguished within the control system. These include virtual and physical addresses, EPROM, KM bus, and the control panel ([Source]). To differentiate between them, the most significant byte of the actual address is prepended. If this byte is missing or is 0x00, a physical read operation is performed.
 
 To write to the address, the write flag must also be set. Write operations are untested. There is a high risk of damaging the control system.
 
@@ -134,17 +134,19 @@ sensor:
     length: 1
     accuracy_decimals: 0
 ```
-For further parameters, see <example-gwg-protocol.yaml>
+For further parameters, see <https://../example-gwg-protocol.yaml>
 
 Tested with OptoLink ESP32-S2 adapter from here:
 <https://github.com/openv/openv/wiki/ESPHome-Optolink>
 
-## Homeassistant 
+## Home Assistant 
 
+Example of a visualization in Home Assistant.
 <img alt="Image HA" src="HA_LogTempViessmannWB2.png" />
 
 ## Captive Portal
 
+Captive Portal on the ESP32.
 <img alt="Image Captive Protal" src="CaptivePortalViessmannWB2.png" />
 
 [Source]: https://github.com/openv/openv/wiki/Protokoll-GWG
