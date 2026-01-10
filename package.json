@@ -1,0 +1,23 @@
+{
+  "name": "esphome_vitoconnect",
+  "version": "1.0.0",
+  "description": "Integration of Viessmann Optolink protocols [GWG], KW and P300 into [ESPHome]. This component is named after the cloud reading unit of Viessmann: Vitoconnect.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/uwen70/esphome_vitoconnect.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/uwen70/esphome_vitoconnect/issues"
+  },
+  "homepage": "https://github.com/uwen70/esphome_vitoconnect#readme",
+  "devDependencies": {
+    "prettier": "^3.7.4"
+  }
+}
