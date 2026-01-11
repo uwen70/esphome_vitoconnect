@@ -28,35 +28,37 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <stdint.h>
 #include <assert.h>
 #include <functional>
-#include <string.h>  // for memcpy
+#include <string.h> // for memcpy
 
-namespace esphome {
-namespace vitoconnect {
+namespace esphome
+{
+  namespace vitoconnect
+  {
 
-class Datapoint {
+    class Datapoint
+    {
 
- public:
-  Datapoint();
-  virtual ~Datapoint();
+    public:
+      Datapoint();
+      virtual ~Datapoint();
 
-  void setAddress(uint16_t address) {  this->_address = address; };
-  uint16_t getAddress() { return this->_address; };
-  
-  void setLength(uint8_t length) {  this->_length = length; };
-  uint8_t getLength() { return this->_length; };
+      void setAddress(uint16_t address) { this->_address = address; };
+      uint16_t getAddress() { return this->_address; };
 
-  static void onData(std::function<void(uint8_t[], uint8_t, Datapoint* dp)> callback);
-  void onError(uint8_t, Datapoint* dp);
+      void setLength(uint8_t length) { this->_length = length; };
+      uint8_t getLength() { return this->_length; };
 
-  virtual void encode(uint8_t* raw, uint8_t length, void* data);
-  virtual void decode(uint8_t* data, uint8_t length, Datapoint* dp = nullptr);
+      static void onData(std::function<void(uint8_t[], uint8_t, Datapoint *dp)> callback);
+      void onError(uint8_t, Datapoint *dp);
 
- protected:
-  uint16_t _address;
-  uint8_t _length;
-  static std::function<void(uint8_t[], uint8_t, Datapoint* dp)> _stdOnData;
-};
+      virtual void encode(uint8_t *raw, uint8_t length, void *data);
+      virtual void decode(uint8_t *data, uint8_t length, Datapoint *dp = nullptr);
 
+    protected:
+      uint16_t _address;
+      uint8_t _length;
+      static std::function<void(uint8_t[], uint8_t, Datapoint *dp)> _stdOnData;
+    };
 
-}  // namespace vitoconnect
-}  // namespace esphome
+  } // namespace vitoconnect
+} // namespace esphome

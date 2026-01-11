@@ -27,7 +27,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * @file OptolinkP300.h
  * @brief Optolink API definions (protocol P300).
  *
- * This file contains all method definitions for the Optolink for the 
+ * This file contains all method definitions for the Optolink for the
  * protocol P300.
  */
 
@@ -36,68 +36,72 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "vitoconnect_optolink.h"
 // #include <Arduino.h>  // for millis
 
-namespace esphome {
-namespace vitoconnect {
+namespace esphome
+{
+  namespace vitoconnect
+  {
 
-/**
- * @brief Protocol implementation class for the Optolink (P300).
- * 
- * This class is a P300 version of the Optolink.
- */
-class OptolinkP300 : public Optolink {
- public:
-  /**
-   * @brief Construct the Optolink object (P300)
-   * 
-   * @param uart UARTDevice object to be used. Pass by reference.
-   */
-  explicit OptolinkP300(uart::UARTDevice* uart);
+    /**
+     * @brief Protocol implementation class for the Optolink (P300).
+     *
+     * This class is a P300 version of the Optolink.
+     */
+    class OptolinkP300 : public Optolink
+    {
+    public:
+      /**
+       * @brief Construct the Optolink object (P300)
+       *
+       * @param uart UARTDevice object to be used. Pass by reference.
+       */
+      explicit OptolinkP300(uart::UARTDevice *uart);
 
-  /**
-   * @brief Method to start the Optolink.
-   * 
-   * Calling this method starts the UARTDevice (passed in the constructor)
-   * with the right settings.
-   */
-  void begin();
+      /**
+       * @brief Method to start the Optolink.
+       *
+       * Calling this method starts the UARTDevice (passed in the constructor)
+       * with the right settings.
+       */
+      void begin();
 
-  /**
-   * @brief Method to keep the Optolink running.
-   * 
-   * This method has to be called frequently. The Optolink object works by 
-   * polling the UARTDevice. If applicable, add a delay between calls to 
-   * feed a watchdog (needed for ESP8266 and ESP32).
-   */
-  void loop();
+      /**
+       * @brief Method to keep the Optolink running.
+       *
+       * This method has to be called frequently. The Optolink object works by
+       * polling the UARTDevice. If applicable, add a delay between calls to
+       * feed a watchdog (needed for ESP8266 and ESP32).
+       */
+      void loop();
 
- private:
-  enum OptolinkState : uint8_t {
-    RESET = 0,
-    RESET_ACK,
-    INIT,
-    INIT_ACK,
-    IDLE,
-    SEND,
-    SEND_ACK,
-    RECEIVE,
-    RECEIVE_ACK,
-    UNDEF
-  } _state;
-  void _reset();
-  void _resetAck();
-  void _init();
-  void _initAck();
-  void _idle();
-  void _send();
-  void _sentAck();
-  void _receive();
-  void _receiveAck();
-  uint32_t _lastMillis;
-  bool _write;
-  uint8_t _rcvBuffer[MAX_DP_LENGTH + 8];
-  size_t _rcvBufferLen;
-  size_t _rcvLen;
-};
+    private:
+      enum OptolinkState : uint8_t
+      {
+        RESET = 0,
+        RESET_ACK,
+        INIT,
+        INIT_ACK,
+        IDLE,
+        SEND,
+        SEND_ACK,
+        RECEIVE,
+        RECEIVE_ACK,
+        UNDEF
+      } _state;
+      void _reset();
+      void _resetAck();
+      void _init();
+      void _initAck();
+      void _idle();
+      void _send();
+      void _sentAck();
+      void _receive();
+      void _receiveAck();
+      uint32_t _lastMillis;
+      bool _write;
+      uint8_t _rcvBuffer[MAX_DP_LENGTH + 8];
+      size_t _rcvBufferLen;
+      size_t _rcvLen;
+    };
 
-}  // namespace vitoconnect
-}  // namespace esphome
+  } // namespace vitoconnect
+} // namespace esphome
