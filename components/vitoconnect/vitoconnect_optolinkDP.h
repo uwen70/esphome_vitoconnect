@@ -33,59 +33,57 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #pragma once
 
 #include <stdint.h>
-#include <string.h> // memcpy
+#include <string.h>  // memcpy
 
-namespace esphome
-{
-  namespace vitoconnect
-  {
+namespace esphome {
+namespace vitoconnect {
 
-    /**
-     * @brief Class holding datapoint values. The Optolink queue stores this
-     * struct.
-     */
-    class OptolinkDP
-    {
-    public:
-      /**
-       * @brief Construct a new OptolinkDP object.
-       *
-       * @param address Address of the datapoint (eg. 0x1234)
-       * @param length Length in bytes of the datapoint. This is also the length
-       *               of the value when writing.
-       * @param write Bool indicating the datapoint is readonly (false) or
-       *              read/write (true)
-       * @param value Pointer to data to write (set to nullptr when reading). This
-       *              data will be copied so it is allowed to go out of scope
-       *              after passing the this object.
-       * @param arg Argument (const) to use for the callback (if not used, set to nullptr)
-       */
-      OptolinkDP(uint16_t address, uint8_t length, bool write, uint8_t *value, void *arg);
-      /**
-       * @brief Construct a new OptolinkDP object.
-       *
-       * All members will be set to zero or nullptr.
-       */
-      OptolinkDP();
+/**
+ * @brief Class holding datapoint values. The Optolink queue stores this
+ * struct.
+ */
+class OptolinkDP {
+ public:
+   /**
+   * @brief Construct a new OptolinkDP object.
+   * 
+   * @param address Address of the datapoint (eg. 0x1234)
+   * @param length Length in bytes of the datapoint. This is also the length
+   *               of the value when writing.
+   * @param write Bool indicating the datapoint is readonly (false) or
+   *              read/write (true)
+   * @param value Pointer to data to write (set to nullptr when reading). This 
+   *              data will be copied so it is allowed to go out of scope
+   *              after passing the this object.
+   * @param arg Argument (const) to use for the callback (if not used, set to nullptr)
+   */
+  OptolinkDP(uint16_t address, uint8_t length, bool write, uint8_t* value, void* arg);
+  /**
+   * @brief Construct a new OptolinkDP object.
+   * 
+   * All members will be set to zero or nullptr.
+   */
+  OptolinkDP();
 
-      /**
-       * @brief Copy constructor for the OptolinkDP class.
-       *
-       * @param obj Object to be copied.
-       */
-      OptolinkDP(const OptolinkDP &obj);
+  /**
+   * @brief Copy constructor for the OptolinkDP class.
+   * 
+   * @param obj Object to be copied.
+   */
+  OptolinkDP(const OptolinkDP& obj);
 
-      /**
-       * @brief Destroy the OptolinkDP object
-       *
-       */
-      ~OptolinkDP();
-      uint16_t address; //!< Address of the datapoint, 2 bytes
-      uint8_t length;   //!< Length of the dataponit, 1 byte
-      bool write;       //!< Mark the dataponit as writeable (true) or not (false)
-      uint8_t *data;    //!< Pointer to the (raw) data to be written. Memory is allocated by this class
-      void *arg;        //!< Argument to be used on the callback function
-    };
+  /**
+   * @brief Destroy the OptolinkDP object
+   * 
+   */
+  ~OptolinkDP();
+  uint16_t address;  //!< Address of the datapoint, 2 bytes
+  uint8_t length;    //!< Length of the dataponit, 1 byte
+  bool write;        //!< Mark the dataponit as writeable (true) or not (false)
+  uint8_t* data;     //!< Pointer to the (raw) data to be written. Memory is allocated by this class
+  void* arg;         //!< Argument to be used on the callback function
+};
 
-  } // namespace vitoconnect
-} // namespace esphome
+
+}  // namespace vitoconnect
+}  // namespace esphome

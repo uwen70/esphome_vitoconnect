@@ -25,49 +25,43 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "vitoconnect_optolinkDP.h"
 
-namespace esphome
-{
-  namespace vitoconnect
-  {
+namespace esphome {
+namespace vitoconnect {
 
-    OptolinkDP::OptolinkDP(uint16_t address, uint8_t length, bool write, uint8_t *value, void *arg) : address(address),
-                                                                                                      length(length),
-                                                                                                      write(write),
-                                                                                                      data(nullptr),
-                                                                                                      arg(arg)
-    {
-      if (write)
-      {
-        data = new uint8_t[length];
-        memcpy(data, value, length);
-      }
+OptolinkDP::OptolinkDP(uint16_t address, uint8_t length, bool write, uint8_t* value, void* arg) :
+  address(address),
+  length(length),
+  write(write),
+  data(nullptr),
+  arg(arg) {
+    if (write) {
+      data = new uint8_t[length];
+      memcpy(data, value, length);
     }
+  }
 
-    OptolinkDP::OptolinkDP() : address(0),
-                               length(0),
-                               write(false),
-                               data(nullptr),
-                               arg(nullptr) {}
+OptolinkDP::OptolinkDP() :
+  address(0),
+  length(0),
+  write(false),
+  data(nullptr),
+  arg(nullptr) {}
 
-    OptolinkDP::OptolinkDP(const OptolinkDP &obj)
-    {
-      address = obj.address;
-      length = obj.length;
-      write = obj.write;
-      data = nullptr;
-      arg = obj.arg;
-      if (write)
-      {
-        data = new uint8_t[length];
-        memcpy(data, obj.data, length);
-      }
-    }
+OptolinkDP::OptolinkDP(const OptolinkDP& obj) {
+  address = obj.address;
+  length = obj.length;
+  write = obj.write;
+  data = nullptr;
+  arg = obj.arg;
+  if (write) {
+    data = new uint8_t[length];
+    memcpy(data, obj.data, length);
+  }
+}
 
-    OptolinkDP::~OptolinkDP()
-    {
-      if (data)
-        delete[] data;
-    }
+OptolinkDP::~OptolinkDP() {
+  if (data) delete[] data;
+}
 
-  } // namespace vitoconnect
-} // namespace esphome
+}  // namespace vitoconnect
+}  // namespace esphome
