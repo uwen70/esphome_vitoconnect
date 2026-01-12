@@ -544,6 +544,10 @@ void OptolinkGWG::_receive() {
       // from being misinterpreted as valid EEPROM content.
       const uint8_t sum = (uint8_t) (b0 + b1);
       if (sum != 0xFF) {
+      if (b0 == 0xFF && b1 == 0xFF) {
+        ESP_LOGW(TAG,
+                 "EEPROM READ: received 0xFF 0xFF, likely adress not in use, continueing");
+      } else {
         ESP_LOGW(TAG,
                  "EEPROM READ: invalid complement pair: 0x%02X 0x%02X (sum=0x%02X), aborting dp",
                  b0, b1, sum);
