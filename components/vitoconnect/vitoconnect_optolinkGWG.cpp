@@ -564,6 +564,7 @@ void OptolinkGWG::_receive() {
         _lastMillis = millis();
         return;
       }
+      }
 
       // Store the payload byte (second byte) into the assembled payload buffer.
       if (_eprom_index < _eprom_total_len) {
