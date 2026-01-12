@@ -546,7 +546,7 @@ void OptolinkGWG::_receive() {
       if (sum != 0xFF) {
       if (b0 == 0xFF && b1 == 0xFF) {
         ESP_LOGW(TAG,
-                 "EEPROM READ: received 0xFF 0xFF, likely adress not in use, continueing");
+                 "EEPROM READ: received 0xFF 0xFF, likely address not in use, continueing");
       } else {
         ESP_LOGW(TAG,
                  "EEPROM READ: invalid complement pair: 0x%02X 0x%02X (sum=0x%02X), aborting dp",
